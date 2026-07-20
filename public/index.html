@@ -1,0 +1,1376 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>IDEESE - Sistema Premium de Gestión de Inventario</title>
+  <meta name="description"
+    content="Gestión de inventario inteligente, rápida y con una interfaz premium para empresas y negocios modernos.">
+  <!-- Google Fonts - Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+    rel="stylesheet">
+  <!-- Lucide Icons CDN -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- Export/Import Libs -->
+  <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+  <!-- Custom Styles -->
+  <link rel="stylesheet" href="/css/styles.css?v=2">
+</head>
+
+<body>
+
+  <!-- PANTALLA DE CONFIGURACIÓN INICIAL (SETUP) -->
+  <div id="setup-screen" class="setup-container hidden">
+    <div class="setup-card">
+      <div class="setup-header">
+        <div class="brand">
+          <img class="app-logo-display hidden"
+            style="width: 32px; height: 32px; object-fit: contain; margin-right: 8px;">
+          <i data-lucide="package-search" class="logo-icon animate-pulse default-app-icon"></i>
+          <span class="app-name-display">IDEESE</span>
+        </div>
+        <h1>Configuración Inicial</h1>
+        <p>Define el directorio de trabajo donde se almacenará la base de datos y los archivos del sistema.</p>
+      </div>
+
+      <form id="setup-form" class="setup-form">
+        <div class="form-group">
+          <label for="work-path">Ruta del Directorio de Trabajo</label>
+          <div class="input-with-icon">
+            <i data-lucide="folder"></i>
+            <input type="text" id="work-path" placeholder="Ej: C:\Users\Usuario\Documents\Inventario" required>
+          </div>
+          <span class="help-text">Se crearán las carpetas de base de datos y archivos multimedia automáticamente en esta
+            ruta.</span>
+        </div>
+
+        <div id="render-tip" class="info-alert hidden">
+          <i data-lucide="cloud-lightning"></i>
+          <div>
+            <strong>Entorno Render detectado:</strong> Te recomendamos usar la ruta persistente <code>/var/data</code>
+            para no perder tu información al reiniciar el servidor.
+          </div>
+        </div>
+
+        <button type="submit" class="btn-primary btn-block" id="btn-setup-submit">
+          <span>Inicializar Sistema</span>
+          <i data-lucide="arrow-right"></i>
+        </button>
+      </form>
+      <div id="setup-error" class="error-message hidden"></div>
+    </div>
+  </div>
+  </div>
+
+  <!-- PANTALLA DE LOGIN (FASE AUTENTICACIÓN) -->
+  <div id="login-screen" class="hidden">
+    <div class="login-container">
+      <div class="login-logo">
+        <img class="app-logo-display hidden"
+          style="width: 48px; height: 48px; object-fit: contain; margin-bottom: 16px;">
+        <i data-lucide="package-search" class="default-app-icon"></i>
+        <span class="app-name-display">IDEESE</span>
+      </div>
+      <p class="login-subtitle">Inicia sesión para continuar</p>
+      <form id="login-form" class="login-form">
+        <div class="form-group">
+          <label for="login-username">Usuario</label>
+          <input type="text" id="login-username" class="form-control" placeholder="Ingrese su usuario" required>
+        </div>
+        <div class="form-group">
+          <label for="login-password">Contraseña</label>
+          <input type="password" id="login-password" class="form-control" placeholder="Ingrese su contraseña" required>
+        </div>
+        <button type="submit" class="btn-primary login-btn">Ingresar</button>
+      </form>
+      <div id="login-error"></div>
+    </div>
+  </div>
+
+  <!-- APLICACIÓN PRINCIPAL (SIDEBAR + MAIN CONTENT) -->
+  <div id="app-container" class="app-layout hidden">
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+      <div class="sidebar-brand">
+        <img class="app-logo-display hidden"
+          style="width: 24px; height: 24px; object-fit: contain; margin-right: 12px;">
+        <i data-lucide="box" class="brand-icon default-app-icon"></i>
+        <h2 class="app-name-display">IDEESE</h2>
+      </div>
+
+      <nav class="sidebar-menu">
+        <a href="#dashboard" class="menu-item active" data-target="dashboard">
+          <i data-lucide="layout-dashboard"></i>
+          <span>Dashboard</span>
+        </a>
+        <a href="#inventory" class="menu-item" data-target="inventory">
+          <i data-lucide="package"></i>
+          <span>Inventario</span>
+        </a>
+        <a href="#categories" class="menu-item" data-target="categories">
+          <i data-lucide="tags"></i>
+          <span>Categorías</span>
+        </a>
+        <a href="#clients" class="menu-item" data-target="clients">
+          <i data-lucide="users"></i>
+          <span>Clientes</span>
+        </a>
+        <a href="#history" class="menu-item" data-target="history">
+          <i data-lucide="history"></i>
+          <span>Historial</span>
+        </a>
+        <a href="#suppliers" class="menu-item" data-target="suppliers">
+          <i data-lucide="truck"></i>
+          <span>Proveedores</span>
+        </a>
+        <a href="#purchases" class="menu-item" data-target="purchases">
+          <i data-lucide="shopping-cart"></i>
+          <span>Compras</span>
+        </a>
+        <a href="#" class="menu-item hidden" id="nav-users" data-target="users">
+          <i data-lucide="users"></i>
+          <span>Usuarios</span>
+        </a>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="user-profile" style="flex-direction: column; align-items: flex-start; gap: 8px; width: 100%;">
+          <div style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <i data-lucide="user" class="profile-avatar" style="width: 32px; height: 32px; padding: 6px;"></i>
+              <div>
+                <span id="active-user-name"
+                  style="font-size: 0.9rem; font-weight: 600; display: block; line-height: 1.1;">Admin</span>
+                <span id="active-user-role"
+                  style="font-size: 0.7rem; color: var(--color-success); font-weight: 600;">Administrador</span>
+              </div>
+            </div>
+            <button id="btn-logout" class="btn-icon" title="Cerrar Sesión"
+              style="color: var(--color-danger); background: var(--bg-glass-05);">
+              <i data-lucide="log-out"></i>
+            </button>
+          </div>
+        </div>
+
+        <a href="#settings" class="menu-item hidden" id="nav-settings" data-target="settings"
+          style="margin-top: 10px; padding: 8px 12px; border-radius: 8px;">
+          <i data-lucide="settings"></i>
+          <span>Configuración</span>
+        </a>
+        <div class="work-dir-badge">
+          <i data-lucide="hard-drive"></i>
+          <span id="active-work-dir" class="truncate" title="Directorio de trabajo">Cargando...</span>
+        </div>
+      </div>
+    </aside>
+
+    <!-- CONTENIDO PRINCIPAL -->
+    <main class="main-content">
+
+      <!-- HEADER GLOBAL -->
+      <header class="main-header">
+        <div class="header-left">
+          <h1 id="page-title">Dashboard</h1>
+        </div>
+        <div class="header-right" style="display: flex; align-items: center;">
+          <button id="btn-theme-toggle" class="btn-icon"
+            style="margin-right: 12px; border: 1px solid var(--border-color); background: var(--bg-glass-05);"
+            title="Cambiar Tema">
+            <i data-lucide="sun"></i>
+          </button>
+          <button id="btn-quick-movement" class="btn-secondary">
+            <i data-lucide="arrow-left-right"></i>
+            <span>Registrar Movimiento</span>
+          </button>
+          <button id="btn-add-product-quick" class="btn-primary">
+            <i data-lucide="plus"></i>
+            <span>Nuevo Producto</span>
+          </button>
+        </div>
+      </header>
+
+      <!-- PANELES DE CONTENIDO (SPA) -->
+      <div class="content-body">
+
+        <!-- SECCIÓN 1: DASHBOARD -->
+        <section id="panel-dashboard" class="tab-panel active">
+          <!-- Tarjetas de Estadísticas -->
+          <div class="stats-grid">
+            <div class="stat-card">
+              <div class="stat-icon bg-primary-soft text-primary">
+                <i data-lucide="package"></i>
+              </div>
+              <div class="stat-info">
+                <h3>Total Productos</h3>
+                <p id="stat-total-products" class="stat-value">0</p>
+              </div>
+            </div>
+
+            <div class="stat-card">
+              <div class="stat-icon bg-success-soft text-success">
+                <i data-lucide="dollar-sign"></i>
+              </div>
+              <div class="stat-info">
+                <h3>Valor Inventario</h3>
+                <p id="stat-total-value" class="stat-value">S/ 0.00</p>
+              </div>
+            </div>
+
+            <div class="stat-card alert">
+              <div class="stat-icon bg-danger-soft text-danger">
+                <i data-lucide="alert-triangle"></i>
+              </div>
+              <div class="stat-info">
+                <h3>Stock Mínimo Alerta</h3>
+                <p id="stat-low-stock" class="stat-value">0</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Contenido Dashboard Split -->
+          <div class="dashboard-split">
+            <!-- Stock Crítico -->
+            <div class="card card-table">
+              <div class="card-header">
+                <h2>Alerta de Stock Crítico</h2>
+                <span class="badge badge-danger">Atención requerida</span>
+              </div>
+              <div class="table-responsive">
+                <table id="table-critical-stock">
+                  <thead>
+                    <tr>
+                      <th>Producto</th>
+                      <th>Stock Actual</th>
+                      <th>Stock Mínimo</th>
+                      <th>Estado</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <!-- Dinámico -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- Últimos Movimientos -->
+            <div class="card card-timeline">
+              <div class="card-header">
+                <h2>Actividad Reciente</h2>
+              </div>
+              <div class="timeline" id="timeline-recent">
+                <!-- Dinámico -->
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- SECCIÓN 2: INVENTARIO -->
+        <section id="panel-inventory" class="tab-panel">
+          <div class="filter-bar">
+            <div class="search-box">
+              <i data-lucide="search"></i>
+              <input type="text" id="search-product" placeholder="Buscar por SKU o Nombre...">
+            </div>
+            <div class="filter-actions" style="display: flex; gap: 8px; flex-wrap: wrap;">
+              <select id="filter-category" style="min-width: 160px; height: 100%;">
+                <option value="">Todas las Categorías</option>
+              </select>
+              <button id="btn-download-template" class="btn-secondary" title="Descargar Plantilla CSV">
+                <i data-lucide="download"></i>
+                <span style="font-size: 0.85rem;">Plantilla</span>
+              </button>
+              <button id="btn-import-csv" class="btn-secondary" title="Importar desde CSV">
+                <i data-lucide="upload"></i>
+                <span style="font-size: 0.85rem;">Importar CSV</span>
+              </button>
+              <input type="file" id="csv-file-input" accept=".csv" class="hidden">
+              <button id="btn-export-inventory" class="btn-secondary" title="Exportar Inventario a Excel">
+                <i data-lucide="download-cloud"></i>
+                <span style="font-size: 0.85rem;">Excel</span>
+              </button>
+              <button id="btn-export-inventory-pdf" class="btn-secondary" title="Exportar Inventario a PDF">
+                <i data-lucide="file-text"></i>
+                <span style="font-size: 0.85rem;">PDF</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="card no-padding">
+            <div class="table-responsive">
+              <table id="table-products">
+                <thead>
+                  <tr>
+                    <th>Imagen</th>
+                    <th>SKU</th>
+                    <th>Nombre</th>
+                    <th>Categoría</th>
+                    <th>P. Compra</th>
+                    <th>P. Venta</th>
+                    <th>Stock</th>
+                    <th>Acciones</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <!-- Dinámico -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- SECCIÓN 3: CATEGORÍAS -->
+        <section id="panel-categories" class="tab-panel">
+          <div class="category-layout">
+            <!-- Formulario de Categorías -->
+            <div class="card">
+              <div class="card-header">
+                <h2>Nueva Categoría</h2>
+              </div>
+              <form id="category-form">
+                <div class="form-group">
+                  <label for="cat-name">Nombre de Categoría</label>
+                  <input type="text" id="cat-name" required placeholder="Ej: Electrónica, Alimentos...">
+                </div>
+                <div class="form-group">
+                  <label for="cat-description">Descripción</label>
+                  <textarea id="cat-description" placeholder="Opcional..."></textarea>
+                </div>
+                <button type="submit" class="btn-primary btn-block">
+                  <i data-lucide="plus"></i>
+                  <span>Crear Categoría</span>
+                </button>
+              </form>
+            </div>
+
+            <!-- Tabla de Categorías -->
+            <div class="card no-padding">
+              <div class="table-responsive">
+                <table id="table-categories">
+                  <thead>
+                    <tr>
+                      <th>Nombre</th>
+                      <th>Descripción</th>
+                      <th>Acciones</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <!-- Dinámico -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- SECCIÓN 3.5: CLIENTES (Fase 4) -->
+        <section id="panel-clients" class="tab-panel">
+          <div class="filter-bar">
+            <div class="search-box">
+              <i data-lucide="search"></i>
+              <input type="text" id="search-client" placeholder="Buscar cliente por nombre o RUC...">
+            </div>
+            <button id="btn-add-client" class="btn-primary">
+              <i data-lucide="plus"></i>
+              <span>Nuevo Cliente</span>
+            </button>
+          </div>
+
+          <div class="card no-padding">
+            <div class="table-responsive">
+              <table id="table-clients">
+                <thead>
+                  <tr>
+                    <th>Cliente / Razón Social</th>
+                    <th>RUC</th>
+                    <th>Sedes / Proyectos</th>
+                    <th>Acciones</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <!-- Dinámico -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- SECCIÓN: PROVEEDORES -->
+        <section id="panel-suppliers" class="tab-panel">
+          <div class="filter-bar">
+            <div class="search-box">
+              <i data-lucide="search"></i>
+              <input type="text" id="search-supplier" placeholder="Buscar proveedor...">
+            </div>
+            <button id="btn-add-supplier" class="btn-primary">
+              <i data-lucide="plus"></i>
+              <span>Nuevo Proveedor</span>
+            </button>
+          </div>
+
+          <div class="card no-padding">
+            <div class="table-responsive">
+              <table id="table-suppliers">
+                <thead>
+                  <tr>
+                    <th>Razón Social</th>
+                    <th>RUC</th>
+                    <th>Contacto</th>
+                    <th>Email</th>
+                    <th>Teléfono</th>
+                    <th>Acciones</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <!-- Dinámico -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- SECCIÓN: ÓRDENES DE COMPRA -->
+        <section id="panel-purchases" class="tab-panel">
+          <div class="filter-bar">
+            <div class="search-box">
+              <i data-lucide="search"></i>
+              <input type="text" id="search-purchase" placeholder="Buscar orden...">
+            </div>
+            <button id="btn-add-purchase" class="btn-primary">
+              <i data-lucide="plus"></i>
+              <span>Nueva Orden de Compra</span>
+            </button>
+          </div>
+
+          <div class="card no-padding">
+            <div class="table-responsive">
+              <table id="table-purchases">
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>Proveedor</th>
+                    <th>Fecha</th>
+                    <th>Total</th>
+                    <th>Estado</th>
+                    <th>Acciones</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <!-- Dinámico -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- SECCIÓN 4: HISTORIAL -->
+        <section id="panel-history" class="tab-panel">
+          <div class="filter-bar" style="flex-direction: column; gap: 12px; align-items: stretch; margin-bottom: 24px;">
+            <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+              <div class="search-box" style="flex-grow: 1; max-width: none;">
+                <i data-lucide="search"></i>
+                <input type="text" id="search-history" placeholder="Buscar por SKU o Nombre de Producto...">
+              </div>
+              <div class="search-box" style="flex-grow: 1; max-width: none;">
+                <i data-lucide="user-check"></i>
+                <input type="text" id="search-history-client" placeholder="Buscar por Cliente destinatario...">
+              </div>
+              <div style="display: flex; gap: 8px; flex-grow: 1;">
+                <select id="filter-history-client-select" style="flex-grow: 1; background: var(--bg-card);">
+                  <option value="">Seleccionar Cliente...</option>
+                </select>
+                <select id="filter-history-project-select" style="flex-grow: 1; background: var(--bg-card);" disabled>
+                  <option value="">Seleccionar Sede...</option>
+                </select>
+              </div>
+            </div>
+
+            <div
+              style="display: flex; gap: 12px; flex-wrap: wrap; align-items: center; justify-content: space-between;">
+              <div style="display: flex; gap: 12px; flex-wrap: wrap; align-items: center;">
+                <select id="filter-history-type" style="min-width: 140px; background: var(--bg-card);">
+                  <option value="">Todos los tipos</option>
+                  <option value="input">Entradas</option>
+                  <option value="output">Salidas</option>
+                </select>
+
+                <select id="filter-history-user" style="min-width: 150px; background: var(--bg-card);">
+                  <option value="">Todos los Usuarios</option>
+                  <option value="Administrador">Administrador</option>
+                  <option value="Almacenero 1">Almacenero 1</option>
+                  <option value="Almacenero 2">Almacenero 2</option>
+                  <option value="Supervisor">Supervisor</option>
+                  <option value="Liquidador">Liquidador</option>
+                </select>
+                <div class="date-range-filter"
+                  style="display: flex; align-items: center; gap: 8px; color: var(--text-muted); font-size: 0.85rem;">
+                  <span>Desde:</span>
+                  <input type="date" id="filter-history-date-start"
+                    style="padding: 8px; font-size: 0.85rem; background: var(--bg-card);">
+                  <span>Hasta:</span>
+                  <input type="date" id="filter-history-date-end"
+                    style="background: var(--bg-card); color: var(--text-main); border: 1px solid var(--border-color); padding: 4px 8px; border-radius: 4px; outline: none;">
+                </div>
+              </div>
+              <button id="btn-export-history" class="btn-secondary" title="Exportar reporte a Excel">
+                <i data-lucide="file-spreadsheet"></i>
+                <span>Excel</span>
+              </button>
+              <button id="btn-export-history-pdf" class="btn-secondary" title="Exportar reporte a PDF">
+                <i data-lucide="file-text"></i>
+                <span>PDF</span>
+              </button>
+            </div>
+
+            <div id="investment-report-summary"
+              style="display: none; background: var(--bg-card); border: 1px solid var(--color-primary); padding: 15px; border-radius: var(--radius-md); margin-top: 10px; flex-direction: row; justify-content: space-between; align-items: center;">
+              <div>
+                <h4 style="margin: 0; color: var(--text-muted); font-size: 0.9rem;">Inversión Total en Materiales (Sede
+                  Seleccionada)</h4>
+                <p id="investment-total-value"
+                  style="margin: 5px 0 0 0; font-size: 1.5rem; font-weight: bold; color: var(--color-primary);">S/ 0.00
+                </p>
+              </div>
+              <button id="btn-export-investment" class="btn-primary">
+                <i data-lucide="download"></i> Exportar Reporte de Inversión
+              </button>
+            </div>
+          </div>
+
+          <div class="card no-padding">
+            <div class="table-responsive">
+              <table id="table-movements">
+                <thead>
+                  <tr>
+                    <th>Fecha</th>
+                    <th>Producto</th>
+                    <th>Tipo</th>
+                    <th>Cantidad</th>
+                    <th>Concepto / Cliente</th>
+                    <th>Usuario</th>
+                    <th>Acción</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <!-- Dinámico -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- SECCIÓN 6: USUARIOS (Solo Admin) -->
+        <section id="panel-users" class="tab-panel">
+          <div class="section-header"
+            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <div>
+              <h2>Gestión de Usuarios</h2>
+              <p class="text-muted">Crea y administra los accesos al sistema.</p>
+            </div>
+            <button class="btn-primary" onclick="openUserModal()">
+              <i data-lucide="user-plus"></i>
+              <span>Nuevo Usuario</span>
+            </button>
+          </div>
+          <div class="card no-padding">
+            <div class="table-responsive">
+              <table id="table-users">
+                <thead>
+                  <tr>
+                    <th>Nombre</th>
+                    <th>Usuario</th>
+                    <th>Rol</th>
+                    <th style="width: 120px;">Acciones</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <!-- Dinámico -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- VISTA: CONFIGURACIÓN -->
+        <section id="panel-settings" class="tab-panel">
+          <div class="content-header">
+            <h2>Configuración del Sistema</h2>
+          </div>
+          <div class="form-grid"
+            style="max-width: 600px; margin: 0 auto; background: var(--bg-surface); padding: 24px; border-radius: 12px;">
+            <div class="form-group" style="grid-column: span 2;">
+              <label for="settings-app-name">Nombre de la Aplicación</label>
+              <input type="text" id="settings-app-name" class="form-control" placeholder="Ej: IDEESE INV" required>
+            </div>
+            <div class="form-group" style="grid-column: span 2;">
+              <label for="settings-app-logo">Logotipo de la Empresa</label>
+              <input type="file" id="settings-app-logo" class="form-control" accept="image/*">
+              <p style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">Seleccione una imagen (PNG o
+                JPG). Se recomienda formato cuadrado. El tamaño ideal es de unos 50KB.</p>
+            </div>
+            <div class="form-group" style="grid-column: span 2; text-align: center;">
+              <img id="settings-logo-preview" class="hidden"
+                style="max-height: 100px; border-radius: 8px; margin-top: 10px;">
+            </div>
+
+            <h3
+              style="grid-column: span 2; border-bottom: 1px solid var(--border-color); padding-bottom: 8px; margin-top: 16px;">
+              Configuración de Email (Alertas)</h3>
+
+            <div class="form-group">
+              <label for="settings-smtp-host">Servidor SMTP</label>
+              <input type="text" id="settings-smtp-host" class="form-control" placeholder="Ej: smtp.gmail.com">
+            </div>
+            <div class="form-group">
+              <label for="settings-smtp-port">Puerto</label>
+              <input type="number" id="settings-smtp-port" class="form-control" placeholder="Ej: 587">
+            </div>
+            <div class="form-group">
+              <label for="settings-smtp-user">Usuario / Email Origen</label>
+              <input type="email" id="settings-smtp-user" class="form-control" placeholder="usuario@gmail.com">
+            </div>
+            <div class="form-group">
+              <label for="settings-smtp-pass">Contraseña (App Password)</label>
+              <input type="password" id="settings-smtp-pass" class="form-control" placeholder="Contraseña">
+            </div>
+            <div class="form-group" style="grid-column: span 2;">
+              <label for="settings-alert-email">Email de Destino (Alertas)</label>
+              <input type="email" id="settings-alert-email" class="form-control" placeholder="admin@empresa.com">
+            </div>
+
+            <div class="form-group" style="grid-column: span 2;">
+              <button id="btn-save-settings" class="btn-primary" style="width: 100%; justify-content: center;">
+                <i data-lucide="save"></i> Guardar Cambios
+              </button>
+            </div>
+          </div>
+        </section>
+    </main>
+  </div>
+
+  <!-- MODAL: PRODUCTO (AGREGAR/EDITAR) -->
+  <div id="modal-product" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 id="modal-product-title">Nuevo Producto</h2>
+        <button class="close-modal">&times;</button>
+      </div>
+      <form id="product-form" enctype="multipart/form-data">
+        <input type="hidden" id="product-id">
+        <div class="modal-body-grid">
+          <div class="grid-left">
+            <div class="form-group">
+              <label for="prod-sku">Código / SKU</label>
+              <input type="text" id="prod-sku" placeholder="Ej: PROD-10023">
+            </div>
+            <div class="form-group">
+              <label for="prod-name">Nombre del Producto</label>
+              <input type="text" id="prod-name" required placeholder="Ej: Laptop Asus Rog">
+            </div>
+            <div class="form-group">
+              <label for="prod-description">Descripción</label>
+              <textarea id="prod-description" placeholder="Detalles del producto..."></textarea>
+            </div>
+            <div class="form-group">
+              <label for="prod-category">Categoría</label>
+              <select id="prod-category">
+                <option value="">Seleccione Categoría</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="grid-right">
+            <div class="price-row">
+              <div class="form-group">
+                <label for="prod-price-buy">P. Compra (S/)</label>
+                <input type="number" id="prod-price-buy" step="0.01" min="0" placeholder="0.00">
+              </div>
+              <div class="form-group">
+                <label for="prod-price-sell">P. Venta (S/)</label>
+                <input type="number" id="prod-price-sell" step="0.01" min="0" placeholder="0.00">
+              </div>
+            </div>
+
+            <div class="stock-row" id="initial-stock-container">
+              <div class="form-group">
+                <label for="prod-stock">Stock Inicial</label>
+                <input type="number" id="prod-stock" min="0" value="0">
+              </div>
+              <div class="form-group">
+                <label for="prod-stock-min">Stock Mínimo</label>
+                <input type="number" id="prod-stock-min" min="0" value="5">
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label>Imagen del Producto</label>
+              <div class="image-upload-zone" id="img-upload-zone">
+                <i data-lucide="image-plus" class="upload-icon"></i>
+                <span class="upload-label">Haga clic o arrastre una imagen</span>
+                <input type="file" id="prod-image" accept="image/*" class="hidden">
+                <img id="img-preview" src="" alt="Vista previa" class="hidden">
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn-secondary close-modal-btn">Cancelar</button>
+          <button type="submit" class="btn-primary" id="btn-save-product">Guardar Producto</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: MOVIMIENTO (REGISTRAR ENTRADA/SALIDA - CARGA MULTIPLE) -->
+  <div id="modal-movement" class="modal">
+    <div class="modal-content" style="max-width: 800px;">
+      <div class="modal-header">
+        <h2>Registrar Movimientos de Stock</h2>
+        <button class="close-modal">&times;</button>
+      </div>
+      <form id="movement-form">
+        <div class="modal-body-grid">
+
+          <!-- Lado Izquierdo: Configuración del Lote -->
+          <div class="grid-left">
+            <div class="form-group">
+              <label>Tipo de Movimiento</label>
+              <div class="toggle-group">
+                <label class="toggle-option">
+                  <input type="radio" name="move-type" value="input" checked>
+                  <span class="toggle-btn bg-success-soft text-success"><i data-lucide="arrow-down-left"></i>
+                    Entrada</span>
+                </label>
+                <label class="toggle-option">
+                  <input type="radio" name="move-type" value="output">
+                  <span class="toggle-btn bg-danger-soft text-danger"><i data-lucide="arrow-up-right"></i> Salida</span>
+                </label>
+              </div>
+            </div>
+
+            <div class="form-group hidden" id="move-client-container">
+              <label for="move-client">Cliente Destinatario</label>
+              <select id="move-client">
+                <option value="">Seleccione Cliente</option>
+              </select>
+            </div>
+
+            <div class="form-group hidden" id="move-project-container">
+              <label for="move-project">Sede / Proyecto</label>
+              <select id="move-project">
+                <option value="">Seleccione Sede</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="move-date">Fecha de Movimiento</label>
+              <input type="datetime-local" id="move-date" required>
+            </div>
+
+            <div class="form-group">
+              <label for="move-concept">Concepto / Referencia General</label>
+              <input type="text" id="move-concept" placeholder="Ej: Venta, Compra, Despacho obra..." required>
+            </div>
+
+            <!-- Entrada de Material Rápida -->
+            <fieldset
+              style="border: 1px solid var(--border-color); border-radius: var(--radius-sm); padding: 14px; margin-top: 10px;">
+              <legend
+                style="padding: 0 8px; font-size: 0.8rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase;">
+                Agregar Material al Lote</legend>
+
+              <div class="form-group" style="margin-bottom: 12px;">
+                <label for="move-product">Material / Producto</label>
+                <select id="move-product">
+                  <option value="">Seleccione Producto</option>
+                </select>
+              </div>
+
+              <div class="stock-row" style="grid-template-columns: 1fr auto; align-items: flex-end; gap: 12px;">
+                <div class="form-group" style="margin-bottom: 0;">
+                  <label for="move-quantity">Cantidad</label>
+                  <input type="number" id="move-quantity" min="1" value="1">
+                </div>
+                <button type="button" id="btn-add-to-move-list" class="btn-secondary"
+                  style="padding: 10px 14px; background: rgba(59, 130, 246, 0.15); color: #60a5fa; border-color: rgba(59, 130, 246, 0.2); display: inline-flex; height: 42px;">
+                  <i data-lucide="plus"></i>
+                  <span>Añadir</span>
+                </button>
+              </div>
+            </fieldset>
+          </div>
+
+          <!-- Lado Derecho: Lista de Materiales Añadidos -->
+          <div class="grid-right">
+            <label style="font-size: 0.875rem; font-weight: 500; margin-bottom: 8px; display: block;">Materiales a
+              Procesar en este Lote:</label>
+            <div
+              style="background: rgba(0,0,0,0.2); border: 1px solid var(--border-color); border-radius: var(--radius-sm); height: 260px; overflow-y: auto;">
+              <table id="table-move-list" style="font-size: 0.85rem;">
+                <thead>
+                  <tr style="background: var(--bg-glass-02);">
+                    <th style="padding: 10px; font-size: 0.75rem;">Material</th>
+                    <th style="padding: 10px; font-size: 0.75rem; text-align: center;">Cantidad</th>
+                    <th style="padding: 10px; font-size: 0.75rem; text-align: right;">Eliminar</th>
+                  </tr>
+                </thead>
+                <tbody id="table-move-list-body">
+                  <tr>
+                    <td colspan="3" style="text-align: center; color: var(--text-muted); padding: 40px 0;">No se han
+                      añadido materiales.</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <span class="help-text" id="move-list-help"
+              style="color: var(--color-danger); display: none; margin-top: 6px; font-weight: 600;">Debe agregar al
+              menos un material a la lista.</span>
+          </div>
+
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn-secondary close-modal-btn">Cancelar</button>
+          <button type="submit" class="btn-primary" id="btn-submit-movements">Registrar Lote</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: DETALLE / LIQUIDACIÓN DE CLIENTE (Fase 3) -->
+  <div id="modal-client-detail" class="modal">
+    <div class="modal-content" style="max-width: 750px;">
+      <div class="modal-header">
+        <h2 id="client-detail-title">Detalle de Cliente</h2>
+        <button class="close-modal">&times;</button>
+      </div>
+      <div style="padding: 24px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+          <div>
+            <p style="font-size: 0.9rem; color: var(--text-muted);">
+              Consolidado de materiales despachados y pendientes de liquidación.
+            </p>
+          </div>
+          <button id="btn-export-client-history" class="btn-secondary">
+            <i data-lucide="file-spreadsheet"></i>
+            <span>Descargar Liquidación (CSV)</span>
+          </button>
+        </div>
+
+        <div class="card no-padding" style="margin-bottom: 0;">
+          <div class="table-responsive" style="max-height: 350px; overflow-y: auto;">
+            <table id="table-client-movements" style="font-size: 0.9rem;">
+              <thead>
+                <tr>
+                  <th>Fecha</th>
+                  <th>SKU</th>
+                  <th>Material / Producto</th>
+                  <th style="text-align: center;">Cantidad</th>
+                  <th>Referencia</th>
+                  <th>Operario</th>
+                </tr>
+              </thead>
+              <tbody id="table-client-movements-body">
+                <!-- Dinámico -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn-secondary close-modal-btn">Cerrar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECCIÓN DE IMPRESIÓN DE GUÍA DE REMISIÓN (FIRMABLE) -->
+  <div id="print-remission-guide" class="print-guide-container">
+    <div class="print-guide-header">
+      <div class="print-logo-brand">
+        <img class="app-logo-display hidden" style="width: 24px; height: 24px; object-fit: contain; margin-right: 8px;">
+        <i data-lucide="package" class="print-brand-icon default-app-icon"></i>
+        <span class="app-name-display">IDEESE</span>
+      </div>
+      <div class="print-guide-title-box">
+        <h2>GUÍA DE DESPACHO / REMISIÓN</h2>
+        <p><strong>N° GUÍA:</strong> <span id="print-guide-number">000000</span></p>
+      </div>
+    </div>
+
+    <div class="print-guide-meta">
+      <div>
+        <p><strong>FECHA DE EMISIÓN:</strong> <span id="print-guide-date">--/--/----</span></p>
+        <p><strong>DESPACHADO POR:</strong> <span id="print-guide-operator">----------</span></p>
+      </div>
+      <div style="text-align: right;">
+        <p><strong>CLIENTE DESTINATARIO:</strong> <span id="print-guide-client">--------------------</span></p>
+        <p><strong>ESTADO:</strong> <span
+            style="font-weight: 800; border: 1.5px solid #000; padding: 2px 6px; border-radius: 4px;">DESPACHADO</span>
+        </p>
+      </div>
+    </div>
+
+    <table class="print-guide-table">
+      <thead>
+        <tr>
+          <th>CÓDIGO / SKU</th>
+          <th>DESCRIPCIÓN DEL MATERIAL</th>
+          <th style="text-align: center;">CANTIDAD RETIRADA</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><span id="print-prod-sku">----------</span></td>
+          <td>
+            <strong id="print-prod-name">----------</strong>
+            <p id="print-prod-desc" style="font-size: 0.85rem; margin-top: 4px; color: #333; font-weight: normal;"></p>
+          </td>
+          <td id="print-prod-qty" style="font-weight: bold; text-align: center; font-size: 1.1rem;">0</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="print-guide-notes">
+      <p><strong>Concepto / Motivo de Salida:</strong> <span id="print-guide-concept">----------</span></p>
+      <p style="margin-top: 12px; font-size: 0.75rem; color: #444; line-height: 1.4;">Este documento oficial certifica
+        que los materiales listados anteriormente han sido debidamente revisados y retirados físicamente de nuestro
+        almacén para su traslado y entrega final al cliente. Cualquier disconformidad debe ser reportada inmediatamente.
+      </p>
+    </div>
+
+    <div class="print-guide-signatures">
+      <div class="signature-box">
+        <div class="signature-line"></div>
+        <p><strong>FIRMA RESPONSABLE DE ALMACÉN</strong></p>
+        <p style="font-size: 0.8rem; margin-top: 4px;">Entregado por: <span id="print-sig-operator">----------</span>
+        </p>
+      </div>
+      <div class="signature-box">
+        <div class="signature-line"></div>
+        <p><strong>FIRMA RECEPTOR / CLIENTE</strong></p>
+        <p style="font-size: 0.8rem; margin-top: 4px; text-align: left; padding-left: 20px;">Nombre:</p>
+        <p style="font-size: 0.8rem; margin-top: 4px; text-align: left; padding-left: 20px;">DNI / RUT:</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: CLIENTE (Agregar/Editar) -->
+  <div id="modal-client-form" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 id="modal-client-title">Nuevo Cliente</h2>
+        <button class="close-modal">&times;</button>
+      </div>
+      <form id="client-form">
+        <input type="hidden" id="client-id">
+        <div class="form-group">
+          <label for="client-name">Nombre / Razón Social</label>
+          <input type="text" id="client-name" required placeholder="Ej: JAYCO SOCIEDAD ANONIMA CERRADA">
+        </div>
+        <div class="form-group">
+          <label for="client-ruc">RUC (Opcional)</label>
+          <input type="text" id="client-ruc" placeholder="Ej: 20602640281">
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn-secondary close-modal-btn">Cancelar</button>
+          <button type="submit" class="btn-primary" id="btn-save-client">Guardar Cliente</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: LISTA DE SEDES / PROYECTOS -->
+  <div id="modal-projects-list" class="modal">
+    <div class="modal-content" style="max-width: 800px;">
+      <div class="modal-header">
+        <h2 id="modal-projects-list-title">Sedes del Cliente</h2>
+        <button class="close-modal">&times;</button>
+      </div>
+      <div style="padding: 24px;">
+        <div style="display: flex; justify-content: space-between; margin-bottom: 16px;">
+          <h3 id="projects-client-name" style="color: var(--text-muted); font-size: 1rem;"></h3>
+          <button id="btn-add-project" class="btn-primary" style="padding: 6px 12px; font-size: 0.85rem;">
+            <i data-lucide="plus" style="width: 16px; height: 16px;"></i> Añadir Sede
+          </button>
+        </div>
+        <div class="table-responsive">
+          <table id="table-projects">
+            <thead>
+              <tr>
+                <th>Sede / Proyecto</th>
+                <th>Dirección</th>
+                <th>Coordenadas / Maps</th>
+                <th>Encargados</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              <!-- Dinámico -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: SEDE/PROYECTO (Agregar/Editar) -->
+  <div id="modal-project-form" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 id="modal-project-title">Nueva Sede</h2>
+        <button class="close-modal">&times;</button>
+      </div>
+      <form id="project-form">
+        <input type="hidden" id="project-id">
+        <input type="hidden" id="project-client-id">
+        <div class="form-group">
+          <label for="project-name">Nombre de Sede / Proyecto</label>
+          <input type="text" id="project-name" required placeholder="Ej: Oficina Principal - Lima">
+        </div>
+        <div class="form-group">
+          <label for="project-address">Dirección</label>
+          <input type="text" id="project-address" placeholder="Ej: Av. Los Geranios 330">
+        </div>
+        <div class="form-group">
+          <label for="project-coordinates">Coordenadas Maps (Opcional)</label>
+          <input type="text" id="project-coordinates" placeholder="Ej: -12.043, -77.028">
+        </div>
+        <div class="form-group">
+          <label for="project-managers">Encargado(s) y Teléfonos</label>
+          <input type="text" id="project-managers" placeholder="Ej: Juan Perez - 999888777">
+        </div>
+        <div class="form-group">
+          <label for="project-ruc">RUC Específico de Sede (Opcional)</label>
+          <input type="text" id="project-ruc" placeholder="RUC si es distinto al cliente">
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn-secondary close-modal-btn">Cancelar</button>
+          <button type="submit" class="btn-primary" id="btn-save-project">Guardar Sede</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: USUARIO (Agregar/Editar) -->
+  <div id="modal-user-form" class="modal">
+    <div class="modal-content" style="max-width: 450px;">
+      <div class="modal-header">
+        <h2 id="modal-user-title">Nuevo Usuario</h2>
+        <button class="close-modal">&times;</button>
+      </div>
+      <form id="user-form">
+        <input type="hidden" id="user-id">
+        <div class="form-group" style="margin-bottom: 15px;">
+          <label for="user-name">Nombre Completo</label>
+          <input type="text" id="user-name" required placeholder="Ej. Juan Pérez">
+        </div>
+        <div class="form-group" style="margin-bottom: 15px;">
+          <label for="user-username">Usuario (Login)</label>
+          <input type="text" id="user-username" required placeholder="Ej. jperez">
+        </div>
+        <div class="form-group" style="margin-bottom: 15px;">
+          <label for="user-password">Contraseña</label>
+          <input type="password" id="user-password" placeholder="Mínimo 6 caracteres">
+          <span style="font-size: 0.75rem; color: var(--text-muted);" id="user-password-help">Déjalo en blanco para no
+            cambiarla si estás editando.</span>
+        </div>
+        <div class="form-group" style="margin-bottom: 15px;">
+          <label for="user-role">Rol</label>
+          <select id="user-role" required>
+            <option value="Administrador">Administrador</option>
+            <option value="Supervisor">Supervisor</option>
+            <option value="Liquidador">Liquidador</option>
+          </select>
+        </div>
+        <div class="modal-footer" style="margin-top: 20px;">
+          <button type="button" class="btn-secondary close-modal-btn">Cancelar</button>
+          <button type="submit" class="btn-primary">Guardar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: PROVEEDOR -->
+  <div id="modal-supplier" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 id="modal-supplier-title">Nuevo Proveedor</h2>
+        <button class="btn-close close-modal">&times;</button>
+      </div>
+      <form id="form-supplier" class="modal-form">
+        <input type="hidden" id="supplier-id">
+        <div class="form-group">
+          <label for="supplier-name">Razón Social *</label>
+          <input type="text" id="supplier-name" class="form-control" required>
+        </div>
+        <div class="form-group">
+          <label for="supplier-ruc">RUC</label>
+          <input type="text" id="supplier-ruc" class="form-control">
+        </div>
+        <div class="form-group">
+          <label for="supplier-contact">Contacto</label>
+          <input type="text" id="supplier-contact" class="form-control">
+        </div>
+        <div class="form-group">
+          <label for="supplier-email">Email</label>
+          <input type="email" id="supplier-email" class="form-control">
+        </div>
+        <div class="form-group">
+          <label for="supplier-phone">Teléfono</label>
+          <input type="text" id="supplier-phone" class="form-control">
+        </div>
+        <div class="form-actions">
+          <button type="button" class="btn-secondary btn-close-action close-modal-btn">Cancelar</button>
+          <button type="submit" class="btn-primary">Guardar Proveedor</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: ÓRDEN DE COMPRA -->
+  <div id="modal-purchase" class="modal">
+    <div class="modal-content" style="max-width: 600px;">
+      <div class="modal-header">
+        <h2 id="modal-purchase-title">Nueva Órden de Compra</h2>
+        <button class="btn-close close-modal">&times;</button>
+      </div>
+      <form id="form-purchase" class="modal-form">
+        <div class="form-group">
+          <label for="purchase-supplier">Proveedor *</label>
+          <select id="purchase-supplier" class="form-control" required>
+            <option value="">Seleccionar Proveedor...</option>
+          </select>
+        </div>
+
+        <div class="form-group" style="border: 1px solid var(--border-color); padding: 12px; border-radius: 8px;">
+          <label style="margin-bottom: 12px; display: block; font-weight: 600;">Añadir Producto</label>
+          <div style="display: flex; gap: 8px;">
+            <select id="purchase-product-select" class="form-control" style="flex-grow: 1;">
+              <option value="">Seleccionar Producto...</option>
+            </select>
+            <input type="number" id="purchase-product-qty" class="form-control" placeholder="Cant." style="width: 80px;"
+              min="1">
+            <input type="number" id="purchase-product-price" class="form-control" placeholder="P. Unit"
+              style="width: 100px;" step="0.01">
+            <button type="button" id="btn-add-purchase-item" class="btn-secondary"><i data-lucide="plus"></i></button>
+          </div>
+        </div>
+
+        <table style="width: 100%; border-collapse: collapse; margin-top: 12px; font-size: 0.9rem;">
+          <thead>
+            <tr style="border-bottom: 1px solid var(--border-color);">
+              <th style="text-align: left; padding: 8px;">Producto</th>
+              <th style="text-align: right; padding: 8px;">Cant.</th>
+              <th style="text-align: right; padding: 8px;">P. Unit</th>
+              <th style="text-align: right; padding: 8px;">Subtotal</th>
+              <th style="width: 40px;"></th>
+            </tr>
+          </thead>
+          <tbody id="purchase-items-body">
+            <!-- Dinámico -->
+          </tbody>
+          <tfoot>
+            <tr>
+              <th colspan="3" style="text-align: right; padding: 12px;">Total:</th>
+              <th id="purchase-total-display"
+                style="text-align: right; padding: 12px; color: var(--color-primary); font-size: 1.1rem;">S/ 0.00</th>
+              <th></th>
+            </tr>
+          </tfoot>
+        </table>
+
+        <div class="form-actions" style="margin-top: 24px;">
+          <button type="button" class="btn-secondary btn-close-action">Cancelar</button>
+          <button type="submit" class="btn-primary" id="btn-save-purchase">Generar Órden</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: DETALLE ORDEN DE COMPRA -->
+  <div id="modal-purchase-detail" class="modal">
+    <div class="modal-content" style="max-width: 650px;">
+      <div class="modal-header">
+        <h2 id="purchase-detail-title">Detalle de Orden de Compra</h2>
+        <button class="close-modal">&times;</button>
+      </div>
+      <div style="padding: 20px;">
+        <div style="display:flex; gap:16px; flex-wrap:wrap; margin-bottom:16px; align-items:center;">
+          <span id="purchase-detail-supplier" style="font-size:0.95rem; color:var(--text-muted);"></span>
+          <span id="purchase-detail-date" style="font-size:0.9rem; color:var(--text-muted);"></span>
+          <span id="purchase-detail-status" class="badge badge-warning">Pendiente</span>
+        </div>
+        <div class="table-responsive">
+          <table style="width:100%; border-collapse:collapse; font-size:0.9rem;">
+            <thead>
+              <tr style="border-bottom:1px solid var(--border-color);">
+                <th style="text-align:left; padding:8px;">SKU</th>
+                <th style="text-align:left; padding:8px;">Producto</th>
+                <th style="text-align:right; padding:8px;">Cant.</th>
+                <th style="text-align:right; padding:8px;">P. Unit</th>
+                <th style="text-align:right; padding:8px;">Subtotal</th>
+              </tr>
+            </thead>
+            <tbody id="purchase-detail-items-body">
+              <!-- Dinámico -->
+            </tbody>
+            <tfoot>
+              <tr>
+                <th colspan="4" style="text-align:right; padding:12px;">Total:</th>
+                <th id="purchase-detail-total" style="text-align:right; padding:12px; color:var(--color-primary); font-size:1.1rem;">S/ 0.00</th>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn-secondary close-modal-btn">Cerrar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: PREGUNTAR GUIA DE REMISION -->
+  <div id="modal-guia-prompt" class="modal" style="z-index: 10000;">
+    <div class="modal-content" style="max-width: 400px; text-align: center;">
+      <div class="modal-header" style="justify-content: center; border-bottom: none;">
+        <h2 style="margin-bottom: 0;">Lote Registrado Exitosamente</h2>
+      </div>
+      <div style="padding: 24px; padding-top: 0;">
+        <i data-lucide="check-circle"
+          style="width: 64px; height: 64px; color: var(--color-success); margin-bottom: 16px;"></i>
+        <p style="margin-bottom: 24px; color: var(--text-muted);">El movimiento en lote ha sido guardado. ¿Deseas
+          generar la Guía de Remisión ahora?</p>
+        <div style="display: flex; gap: 12px; justify-content: center;">
+          <button id="btn-skip-guia" class="btn-secondary">Saltar</button>
+          <button id="btn-generate-guia" class="btn-primary">Generar Guía</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- VISTA IMPRESIÓN GUÍA DE REMISIÓN (LOTE) -->
+  <div id="print-guide" style="display: none;">
+    <!-- Head -->
+    <div
+      style="display: flex; justify-content: space-between; border-bottom: 2px solid #000; padding-bottom: 10px; margin-bottom: 10px;">
+      <div style="width: 60%; display: flex; gap: 20px; align-items: center;">
+        <div
+          style="width: 90px; height: 90px; background: #000; color: #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; text-align: center; border: 4px solid #f5b041;">
+          TU<br>LOGO<br>AQUÍ
+        </div>
+        <div>
+          <h2 style="margin: 0; font-size: 1.2rem; font-weight: bold; text-align: center;">MULTIDISTRIBUCIONES</h2>
+          <h3 style="margin: 2px 0; font-size: 0.8rem; font-weight: normal; text-align: center;">EMPRESA SIMPLE SAC</h3>
+          <p style="margin: 0; font-size: 0.65rem; text-align: center;">Dirección fiscal : Manzana X lote 5 (1er piso)
+            Urb. Covicorti Trujillo - Trujillo - La Libertad</p>
+          <p style="margin: 0; font-size: 0.65rem; text-align: center;">Sucursal : Av. Húsares de Junín 1248 Urb. La
+            Merced III Trujillo - Trujillo - La Libertad</p>
+        </div>
+      </div>
+      <div style="width: 35%; border: 1.5px solid #000; border-radius: 12px; padding: 12px; text-align: center;">
+        <p style="font-weight: bold; font-size: 0.9rem; margin: 0;">R.U.C. 20200200200</p>
+        <div style="background: #e0e0e0; height: 1px; margin: 8px 0;"></div>
+        <p style="font-weight: bold; font-size: 0.85rem; margin: 0;">GUIA DE REMISIÓN<br>ELECTRÓNICA REMITENTE</p>
+        <div style="background: #e0e0e0; height: 1px; margin: 8px 0;"></div>
+        <p style="font-weight: bold; font-size: 0.9rem; margin: 0;" id="print-guide-number">N° TS01 - 00000000</p>
+      </div>
+    </div>
+
+    <!-- Info Traslado -->
+    <div style="margin-bottom: 10px;">
+      <p style="font-size: 0.75rem; font-weight: bold; margin: 0 0 6px 0;">Fecha de inicio de traslado: <span
+          id="print-guide-date" style="font-weight: normal;"></span></p>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 0.75rem;">
+        <div>
+          <p style="margin: 0 0 4px 0;"><strong>Destinatario</strong> <span id="print-guide-client"
+              style="text-transform: uppercase;"></span></p>
+          <p style="margin: 0;"><strong>RUC</strong> <span id="print-guide-ruc" style="margin-left: 56px;"></span></p>
+        </div>
+        <div>
+          <p style="margin: 0 0 4px 0;"><strong>Punto de partida</strong> <span
+              style="text-transform: uppercase; margin-left: 10px;">TRUJILLO - LA LIBERTAD</span></p>
+          <p style="margin: 0;"><strong>Punto de llegada</strong> <span id="print-guide-address"
+              style="text-transform: uppercase; margin-left: 10px;"></span></p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Motivo Traslado -->
+    <div style="margin-bottom: 10px;">
+      <p style="font-size: 0.75rem; font-weight: bold; margin: 0 0 4px 0;">Motivo de traslado</p>
+      <div
+        style="border: 1px solid #000; padding: 6px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; font-size: 0.7rem;">
+        <div><input type="checkbox" id="chk-venta" checked> <label>Venta</label></div>
+        <div><input type="checkbox"> <label>Venta sujeta a confirmacion</label></div>
+        <div><input type="checkbox"> <label>Compra</label></div>
+        <div><input type="checkbox"> <label>Traslado entre establecimientos</label></div>
+        <div><input type="checkbox"> <label>Traslado zona primaria</label></div>
+        <div style="grid-column: span 3;"><input type="checkbox"> <label>Otros: <span
+              id="print-guide-concept"></span></label></div>
+      </div>
+    </div>
+
+    <p style="font-size: 0.75rem; font-weight: bold; margin: 0 0 4px 0;">Datos del bien transportado</p>
+    <table
+      style="width: 100%; border-collapse: collapse; font-size: 0.7rem; border: 1px solid #000; margin-bottom: 10px;">
+      <thead style="background: #f0f0f0; border-bottom: 1px solid #000;">
+        <tr>
+          <th style="border-right: 1px solid #000; padding: 4px; width: 30px;">N°</th>
+          <th style="border-right: 1px solid #000; padding: 4px; width: 100px;">CÓDIGO</th>
+          <th style="border-right: 1px solid #000; padding: 4px; text-align: left;">DESCRIPCIÓN</th>
+          <th style="border-right: 1px solid #000; padding: 4px; width: 60px;">CANTIDAD</th>
+          <th style="padding: 4px; width: 80px;">UNIDAD DE DESPACHO</th>
+        </tr>
+      </thead>
+      <tbody id="print-guide-items">
+        <!-- Dinámico -->
+      </tbody>
+    </table>
+
+    <p style="font-size: 0.75rem; font-weight: bold; margin: 0 0 4px 0;">UNIDAD DE TRANSPORTE Y CONDUCTOR</p>
+    <div style="display: flex; gap: 10px; font-size: 0.7rem; margin-bottom: 10px;">
+      <div style="border: 1px solid #000; padding: 4px; width: 60%; display: flex; gap: 20px;">
+        <span style="font-weight: bold;">Placa del vehiculo</span>
+        <span style="font-weight: bold;">DNI del Conductor:</span>
+      </div>
+      <div style="border: 1px solid #000; padding: 4px; width: 40%;">
+        <div style="display: flex; justify-content: space-between;"><span style="font-weight: bold;">Modalidad de
+            transporte</span> <span>TRANSPORTE PRIVADO</span></div>
+        <div style="display: flex; justify-content: space-between;"><span style="font-weight: bold;">Peso Total Aprox.
+            (KGM):</span> <span id="print-guide-weight"></span></div>
+      </div>
+    </div>
+
+    <div style="border: 1px solid #000; padding: 4px; font-size: 0.7rem; margin-bottom: 30px;">
+      <span style="font-weight: bold;">Observaciones</span><br>
+      Doc. Referencia: Despacho procesado por <span id="print-guide-user"></span>
+    </div>
+
+    <!-- Firmas -->
+    <div style="display: flex; justify-content: space-between;">
+      <div style="width: 45%; text-align: left; padding: 10px;">
+        <div
+          style="border-top: 1px solid #000; margin-top: 40px; padding-top: 5px; font-size: 0.75rem; font-weight: bold; text-align: center;">
+          Representación impresa de la GUIA DE REMISIÓN<br>
+          GRACIAS POR SU COMPRA!
+        </div>
+      </div>
+      <div style="width: 45%; border: 1px solid #000; border-radius: 8px; padding: 10px;">
+        <div style="margin-top: 60px; border-top: 1px solid #000; padding-top: 5px; font-size: 0.75rem;">
+          Conformidad del cliente:<br>
+          Nombre:<br>
+          DNI:
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Custom Scripts -->
+  <script src="/js/app.js?v=10"></script>
+</body>
+
+</html>
