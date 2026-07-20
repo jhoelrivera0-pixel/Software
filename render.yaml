@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: stockvibe-inventario
+    runtime: node
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: NODE_VERSION
+        value: 18.0.0
+      - key: WORK_DIR
+        value: /var/data
+    disk:
+      name: stockvibe-data
+      mountPath: /var/data
+      sizeGB: 1
